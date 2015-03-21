@@ -1,17 +1,26 @@
 function main(){
     "use strict";
 
-    var acct1 = {user: "acct1", pass: "pass1", voted: [], toVote: []};
-    var accts = [];
-    var acctNum = 0;
+    var acct1 = {user: "acct1", pass: "pass1", voted: [], toVote: []},
+        accts = [],
+        tweets = [],
+        acctNum = 0;
 
     accts.push(acct1);
+    accts.push({user: "acct2", pass: "pass2", voted: [], toVote: []});
     createTweet("Hello");
     createTweet("Other tweet");
 
     $(".submit").on("click", function(){
-        var text = $(".tweet");
-        createTweet(text);
+        var text = $(".tweet").val(),
+            $tweet = createTweetHTML(text);
+        if(getIndexOfTweet(text, tweets) === -1){
+            $(".vote-queue").append($tweet);
+            createTweet(text); 
+        }
+        else{
+            alert("Tweet with this text already being voted on!");
+        }        
     });
 
     //Event handler for yes votes
@@ -20,32 +29,49 @@ function main(){
             text = $tweet.find("span").text(),
             toVote = accts[acctNum].toVote,
             voted = accts[acctNum].voted,
-            index = getIndexOfTweet(text,toVote),
-            tweet = toVote[index];
+            usrIndex = getIndexOfTweet(text,toVote),
+            twtIndex = getIndexOfTweet(text, tweets),
+            tweet = toVote[usrIndex];
 
-        toVote.splice(index, 1);
+        //Set user's vote to yes in tweet stack
+        tweets[twtIndex].ballot[acctNum] = 1;
+
+        //Remove tweet from the users voting queue
+        toVote.splice(usrIndex, 1);
         voted.push(tweet);
         $(".voted").append($("<p>").text(text));
         $tweet.remove();
-        alert(voted[voted.length-1].text);
     };
 
     //Event handler for no votes
     var downvoteClick = function(){
         var $tweet = $(this).parent(),
-            text = $tweet.find("span").text();
+            text = $tweet.find("span").text(),
+            toVote = accts[acctNum].toVote,
+            voted = accts[acctNum].voted,
+            usrIndex = getIndexOfTweet(text,toVote),
+            twtIndex = getIndexOfTweet(text, tweets),
+            tweet = toVote[usrIndex];
 
+        //Set user's vote to yes in tweet stack
+        tweets[twtIndex].ballot[acctNum] = 0;
+
+        //Remove tweet from the users voting queue
+        toVote.splice(usrIndex, 1);
+        voted.push(tweet);
         $(".voted").append($("<p>").text(text));
         $tweet.remove();
     };
 
     //Creates tweet object and puts it in each users vote queue
     function createTweet(text){
-        var tweet = {text: text, ballot: []};
+        var tweet = {text: text},
+            tweetBallot = {text: text, ballot: []};
             accts.forEach(function(acct){
-                tweet.ballot.push(2);
+                tweetBallot.ballot.push(2);
                 acct.toVote.push(tweet);
             });
+        tweets.push(tweetBallot);
     }
 
     //Prepares and return a tweet html object
@@ -87,7 +113,31 @@ function main(){
         toVote.forEach(function(tweet){
             $(".vote-queue").append(createTweetHTML(tweet.text));
         });
-    })(acct1);
+    })(accts[acctNum]);
+
+    //shows all current tweets and the vote tally for each
+    //TODO: Change this do alter the contents of HTML tags and not just rewrite it every time
+    setInterval(function(){
+        var yay,
+            nay;
+        $(".vote-tweet").remove();
+        tweets.forEach(function(tweet){
+            yay=0;
+            nay=0;
+            tweet.ballot.forEach(function(vote){
+                if(vote === 0){
+                    nay++;
+                }
+                if(vote === 1){
+                    yay++;
+                }                
+            });
+            $(".tweets").append(
+                $("<p>").text("'"+tweet.text+"' Yes: "+yay+" No: "+nay).addClass("vote-tweet")
+            );
+        });
+
+    }, 500);
 }
 
 $(document).ready(main);
