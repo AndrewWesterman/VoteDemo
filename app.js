@@ -11,13 +11,14 @@ function main(){
         //template for tweet objects
         var $tweet = $("<div>").addClass("tweet-obj"),
             text = $(".tweet").val(),
+            $text = $("<span>").text(text),
             $upvote = $("<button>Yes</button>"),        
             $downvote = $("<button>No</button>");
 
 
         $upvote.click(upvoteClick);
         //build tweet object
-        $tweet.text(text);
+        $tweet.append($text);
         $tweet.append($upvote);
         $tweet.append($downvote);
 
@@ -26,9 +27,12 @@ function main(){
     });
 
     var upvoteClick = function(){
-        //alert("You voted yes");
-        alert($(this).parent().val());
-        $(".voted").append($(this).parent().val());
+        var $tweet = $(this).parent(),
+            text = $tweet.find("span").text();
+
+        
+        alert(text);
+        $tweet.remove();
     };
 
     var downvoteClick = function(){
